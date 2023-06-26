@@ -12,35 +12,7 @@ function createData(name, token, share, fractions) {
   return { name, token, share, fractions };
 }
 
-export default function BasicTable({ web3, account, contract }) {
-    const [tokenBalance, setTokenBalance] = useState(0);
-    const [shareBalance, setShareBalance] = useState(0);
-    const [fractionsBalance, setFractionsBalance] = useState(0);
-
-
-    useEffect(() => {
-        const fetchTokenBalance = async () => {
-          if (!account || !contract) return;
-      
-          try {
-            const balance = await contract.methods.balanceOf(account).call();
-            const tokenBal = balance / 10 ** 18;
-            const shareBal = Math.floor(tokenBal);
-            const fractionsBal = parseFloat((tokenBal - shareBal).toFixed(4));
-                  
-            setTokenBalance(tokenBal);
-            setShareBalance(shareBal);
-            setFractionsBalance(fractionsBal);
-          } catch (error) {
-            console.error('Error fetching token balance:', error);
-          }
-        };
-      
-        fetchTokenBalance();
-    }, [account, contract]);
-      
-
-
+export default function BasicTable({ web3, account, contract, tokenBalance, shareBalance, fractionsBalance }) { 
     const truncateAddress = (address) => {
         if (!address) return '';
         return address.slice(0, 6) + '...' + address.slice(-4);
@@ -52,7 +24,7 @@ export default function BasicTable({ web3, account, contract }) {
 
     return (
     <TableContainer component={Paper} sx={{ mb: 1 }}>
-        <Table sx={{ minWidth: 450 }} aria-label="simple table">
+      <Table sx={{ minWidth: 450 }} aria-label="simple table">
         <TableHead>
             <TableRow>
                 <TableCell>Address</TableCell>
@@ -76,8 +48,8 @@ export default function BasicTable({ web3, account, contract }) {
             </TableRow>
             ))}
         </TableBody>
-        </Table>
+      </Table>
     </TableContainer>
-    );
+  );
 }
 

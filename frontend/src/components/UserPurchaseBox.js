@@ -10,14 +10,34 @@ import MenuItem from '@mui/material/MenuItem';
 import useWeb3 from '../hooks/useWeb3';
 import Balance from './Balance';
 
-
-
 const UserPurchaseBox = () => {
   const { web3, account, contract } = useWeb3();
 
   const [tokenPrice, setTokenPrice] = useState(0);
-  const [amountInMatic, setamountInMatic] = useState('');
+  const [amountInMatic, setAmountInMatic] = useState('');
   const [amountInTokens, setAmountInTokens] = useState('');
+
+  let [tokenBalance, setTokenBalance] = useState(0);
+  let [shareBalance, setShareBalance] = useState(0);
+  let [fractionsBalance, setFractionsBalance] = useState(0);
+
+  const fetchTokenBalance = async () => {
+    if (!account || !contract) return;
+    try {
+      const balance = await contract.methods.balanceOf(account).call();
+      const tokenBal = balance / 10 ** 18;
+      const shareBal = Math.floor(tokenBal);
+      const fractionsBal = parseFloat((tokenBal - shareBal).toFixed(4));
+      setTokenBalance(tokenBal);
+      console.log(tokenBalance)
+      setShareBalance(shareBal);
+      console.log(shareBalance)
+      setFractionsBalance(fractionsBal);
+      console.log(fractionsBalance);
+    } catch (error) {
+      console.error('Error fetching token balance:', error);
+    }
+  }; 
 
   useEffect(() => {
     if (amountInMatic !== '') {
@@ -27,7 +47,7 @@ const UserPurchaseBox = () => {
 
   useEffect(() => {
     if (amountInTokens !== '') {
-      setamountInMatic(amountInTokens * tokenPrice);
+      setAmountInMatic(amountInTokens * tokenPrice);
     }
   }, [amountInTokens, tokenPrice]);
 
@@ -43,42 +63,27 @@ const UserPurchaseBox = () => {
     fetchTokenPrice();
   }, [contract]);
 
+  useEffect(() => {
+    fetchTokenBalance();
+  }, [contract]);
+
   const buyTokens = async (amountInMatic) => {
     if (web3 && account && contract) {
-      // Call the buyTokens function from your smart contract
       console.log('Buying tokens...');
       const roundedNumber = parseFloat(amountInMatic.toFixed(18));
+      console.log(roundedNumber)
       await contract.methods.buyTokens().send({ from: account, value: web3.utils.toWei(roundedNumber.toString(), 'ether') });
+      fetchTokenBalance();
     } else {
-      window.alert('Please connect to MetaMask and load the smart contract.');
+      window.alert('Please connect to MetaMask.');
     }
-  };
-
-  const CustomButton = styled(Button)({
-    backgroundColor: '#D9D9D9;',
-    color: '#000000',
-    '&:hover': {
-      backgroundColor: '#D9D9D8',
-    },
-    // Add any other custom styles here
-  });
-
-  const currencies = [
-    {
-      value: 'MATIC',
-      label: '$',
-    },
-    {
-      value: 'SCL',
-      label: '€',
-    },
-  ];
+  }; 
   
   return (
     <div className={styles.container1}>
       <div className={styles.rectangle}>
         <h1>Company Name AG</h1>
-        <Balance web3={web3} account={account} contract={contract} />
+        <Balance web3={web3} account={account} contract={contract} tokenBalance={tokenBalance} shareBalance={shareBalance} fractionsBalance={fractionsBalance} />
         <TextField
           id="filled-number"
           label="MATIC"
@@ -88,7 +93,7 @@ const UserPurchaseBox = () => {
           }}
           variant="filled"
           value={amountInMatic}
-          onChange={(e) => setamountInMatic(e.target.value)}
+          onChange={(e) => setAmountInMatic(e.target.value)}
           className={styles.customTextField}
         />
         <TextField
@@ -107,16 +112,16 @@ const UserPurchaseBox = () => {
           }}
         />
         <div className={styles.flexButton}>
-        <Button 
-          variant="contained"
-          onClick={() => buyTokens(amountInMatic)}
-          className={styles.button}
-          sx={{                            
-              width: '100%',
-              mt: 1,                           
-          }}>
-          Buy
-        </Button>
+          <Button 
+            variant="contained"
+            onClick={() => buyTokens(amountInMatic)}
+            className={styles.button}
+            sx={{                            
+                width: '100%',
+                mt: 1,                           
+            }}>
+            Buy
+          </Button>
         </div>
       </div>
     </div>
